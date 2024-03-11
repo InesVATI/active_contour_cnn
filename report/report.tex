@@ -1,0 +1,123 @@
+\documentclass[a4paper, 11pt]{article}
+\usepackage{theme}
+\usepackage{shortcuts}
+\addbibresource{ref.bib}
+
+\title{Automatic liver segmentation by integrating fully convolutional networks into active contour models}
+\author[1, 2]{Ines VATI}
+\affil[1]{École des Ponts ParisTech, Champs-sur-Marne, France}
+\affil[2]{MVA, ENS Paris-Saclay, Cachan, France}
+\affil[1, 2]{Email \email{ines.vati@eleves.enpc.fr}}
+
+
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Réponses aux questions}
+
+Dans cette première partie, je réponds aux questions demandé en français mais le reste du rapport sera en anglais.
+
+\subsection{Quel est le problème traité ?}
+Le problème traité est la segmentation automatique du foie à partir d'images médicales, qui sont notamment des CT scans. La segmentation du foie est une étape cruciale dans le diagnostic et le traitement des maladies du foie. En effet, elle permet de quantifier le volume du foie, de détecter des lésions et de suivre leur évolution. La segmentation manuelle est très fastidieuse et prend beaucoup de temps. 
+
+Les auteurs proposent une méthode de segmentation automatique en intégrant les réseaux de neurones convolutionnels (FCNs) dans les modèles de contours actifs (ACM). 
+
+Un modèle FCN-$8$ est entrainé à predire une carte de distance structurée en couche. Il prédit la couche dans laquelle se trouve chaque pixel de l'image d'entrée. La sortie de ce réseau est utilisée pour définir une force externe $F_{FCN}$ qui est intégrée dans le modèle ACM.  
+
+\subsection{Quelles sont les équations et méthodes numériques utilisées. Peut-on éventuellement donner une formulation plus mathématique au problème ?}
+
+Soient $C$ une courbe et $\psi$ une fonction Lipschizt tel que 
+$C = \{(x, y) | \psi(x, y) = 0\}$ est le niveau 0 de cette fonction. $\psi$ est une fonction de distance signée telle que $\psi(x, y) > 0$ 
+si $(x, y)$ est à l'exterieur de l'objet délimité par $C$ et $\psi(x, y) < 0$ si $(x, y)$ est à l'interieur de $C$.
+
+Nous considérons une bande étroite de pixels adjacents à l'ensemble de niveau zéro $L_0$. Nous définissons les voisinages de $L_0$ en deux types de couches : $L_1, \dots, L_{N-1}$, les couches qui sont à l'extérieur de la structure, et $L_{-1}, \dots, L_{-N+1}$, les couches qui sont à l'intérieur de la structure. Une couche est définie par son intervalle de distance à l'ensemble de niveau zéro, c'est-à-dire
+$L_i = \lbrace (x, y) | (-i - 0.5)\delta \leq \psi(x, y) \leq (i + 0.5) \delta \rbrace$, pour $|i|<N-1$. 
+
+Par exemple, pour $N=4$, les labels de chaque couche sont $\{-3,\ -2,\ -1,\ 0,\ 1,\ 2,\ 3\}$ et 
+\begin{align*}
+    L_{-3} &= \lbrace (x, y) | \infty < \psi(x, y) < -2.5 \delta \rbrace \\
+    L_{-2} &= \lbrace (x, y) | -2.5 \delta < \psi(x, y) \leq -1.5 \delta \rbrace \\
+    L_{-1} &= \lbrace (x, y) | -1.5 \delta < \psi(x, y) \leq -0.5 \delta \rbrace \\
+    L_{0} &= \lbrace (x, y) | -0.5 \delta < \psi(x, y) \leq 0.5 \delta \rbrace \\
+    L_{1} &= \lbrace (x, y) | 0.5 \delta < \psi(x, y) \leq 1.5 \delta \rbrace \\
+    L_{2} &= \lbrace (x, y) | 1.5 \delta < \psi(x, y) \leq 2.5 \delta \rbrace \\
+    L_{3} &= \lbrace (x, y) | 2.5 \delta < \psi(x, y) \leq \infty \rbrace
+\end{align*}
+
+Le réseau de neurones est entrainé à prédire cette carte de label pour une image CT donnée en entrée. \\ 
+
+\textbf{Entrainement du réseau de neurones.} Donnons une formulation mathématique de ce problème. 
+
+$\mathcal{X}\subset \RR^{D\times H\times W} $ est l'espace des images CT. $D$, $H$ et $W$ sont respectivement la profondeur, la hauteur et la largeur de l'image. 
+
+Soit $f_\theta : \mathcal{X} \mapsto \RR^{D\times H\times W\times 2N-1}$ la fonction apprise par le réseau de neurones qui prend en argument une image $I\in\mathcal{X}$. La carte des labels est obtenue en prenant la valeur maximale sur la dernière dimension de $f_{\theta}(I)$.
+
+Entrainer un réseau de neurones consiste à optimiser les poids du réseaux, notés $\theta$, de façon à minimiser une fonction de coût $L$ qui mesure l'écart entre les prédictions du réseau et les vrais labels. Cette optimisation est généralement faite par descente stochastique du gradient.
+
+La sortie du réseau de neurones est généralement normalisée par une fonction d'activation \textit{softmax}. La prediction du réseau $\hat{y}\in\RR^{D\times H\times W\times 2N-1}$ s'écrite alors pour tout $c\in\{1, \dots, 2N-1\}$ comme
+$$
+\hat{y}_c =  \frac{e^{[f_{\theta}(I)]_c}}{\sum_{i=1}^{2N-1} e^{[f_{\theta}(I)]_i}}
+$$
+
+
+Un fonction de coût classique pour un problème de classification est la cross entropie. Dans le cas où il y a $2N-1$ classes, la fonction de coût est donnée par
+\begin{equation}
+    L_{CE}(f_{\theta}(I), y) = \sum_{k=1}^{D}\sum_{i=1}^{H}\sum_{j=1}^{W} - \log\left(  \hat{y}_{k,i,j,c}\right) \ones_{\{y_{k,i,j} = c\}}
+\end{equation}
+où $y\in\RR^{D\times H\times W}$ est la vrai carte de labels de l'image $I$. D'autres fonctions de coût peuvent être utilisées. \\ 
+
+\textbf{Résolution de l'évolution des contours actifs.} Les auteurs proposent une nouvelle force externe notée $F_{FCN}$ à ajouter au modèle de contours actifs basée sur la prédiction du réseau de neurones. Plusieurs choix sont possible pour ajuster l'amplitude de cette force par rapport à la couche dans laquelle se trouve son point d'application. %Elle peut s'écrite par ex ?
+
+Ils utilisent la méthode des ensembles de niveaux. Cela revient à résoudre l'équation suivant 
+$$
+\frac{\partial \psi}{\partial t} = (w_0F_0 + w_1F_{FCN} + \mu\kappa)\overrightarrow{N} \qquad \textrm{where} \quad \kappa = div(\frac{\nabla \psi}{\norm{\nabla\psi}})
+$$
+$\overrightarrow{N}$ est le vecteur normal unitaire du niveau zéro $C$ de $\psi$. $w_i$ sont des poids qui permettent de régler l'importance de chaque force. $\mu$ est un paramètre de régularisation. $\kappa$ est la courbure de $C$.
+$F_0$ correspond aux forces images conventionnelles. L'utilisateur peut choisir une fonction basée region, \textit {region-based model} \cite{caselles_geodesic_1997} ou une fonction basée contour, \textit{edge-based model} \cite{chan_active_2001} pour $F_0$. Les auteurs optent pour un modèle de Chan-Vese locale basée région \cite{lankton_localizing_2008}. 
+
+Pour résoudre cette équation, les auteurs utilisent la méthode \textit{sparse field} de Whitaker \cite{whitaker_level-set_1998}. 
+
+
+\subsection{Pouvez-vous situer cet article par rapport aux méthodes étudiées en cours et le comparer à des sujets proches évoqués en cours.}
+
+Cet article se situe dans le cadre de la segmentation d'images médicales, dans la partie du cours qui traite des modèles des contours actifs. 
+
+Nous avons vu dans le cours que cette méthode était très sensible à l'initialisation de la courbe donnée manuellement. En effet, un \textit{snake} qui n'est pas suffisamment proche du bord de l'objet à segmenter n'est pas attiré par lui. Nous avions également noté qu"à cause du bruit certains points isolés, étant des maxima locaux du gradient, pouvaient bloquer la courbe. A l'instar du modèle de ballon, l'ajout de la force externe $F_{FCN}$ rend la méthode proposée plus robuste à l'initialisation en poussant ou tirant la courbe vers le bord de l'objet à segmenter. Contrairement à la force ballon, la courbe même si la courbe dépasse le contour d'intérêt, elle est tirée vers le contour. Dans le modèle de ballon, la courbe initiale doit être initialisée à l'intérieur de la structure. Dans le modèle proposé \cite{guo_automatic_2019}, le contour initiale peut être partiellemnent ou complètement à l'intérieur de la structure. Cependant, il ne peut pas étre entièrement à l'extérieur à cause le présence de fragments parasite dans la carte de distance prédite par le réseau de neurones. 
+
+\subsection{Quelle est l'originalité du travail (selon les auteurs)}
+
+Les auteurs proposent d'imposer une force de contrainte externe au modèle des contours actifs en utilisant la sortie d'un réseau de neurones entrainé. L'intérêt de cette nouvelle force externe est que sa direction et son intensité dépendent de la position et de la distance relative du point à la frontière de l'objet à segmenter. Selon, sa position (à l'intérieur ou l'extérieur), la force externe tire ou pousse le contour actif vers la frontière de l'objet. De plus, si le point d'application est loin de la frontière, la force est d'autant plus forte. Lorsque le point est proche de la frontière, l'amplitude de la force se réduit laissant les autres forces, comme les forces internes de régularisation et forces image, prendre le dessus et affiner précisément le bord de l'objet. Il joue en quelque sorte le rôle d'un mecanisme d'attention.
+
+combiner des informations de haut niveau grâce à la carte de distance en couche prédite par le réseau de neurones avec des informations de bas niveau issue du modèle ACM. 
+
+L'originalité réside aussi dans le fait que le réseau de neurones n'aurait pas besoin d'étre réentrainé pour chaque nouvelle image, voire pour un nouveau dataset (issu d'un autre hopital par exemple). 
+
+\subsection{Quels sont les résultats nouveaux importants qui en découlent}
+
+Cette méthode est robuste à l'initialisation du contour actif. La courbe initiale peut être placée loin du bord de la structure à segmenter. 
+
+\subsection{Voyez-vous des faiblesses dans l'approche présentée et avez-vous des idées pour y faire face?}
+
+Les cartes de distances prédites par le réseau de neurones présentes des artifacts. 
+
+
+\section{Methods}
+\url{https://arxiv.org/abs/1411.4038} 
+
+We consider a narrow band of grid points adjacent to the zero level set as $L_0$ layer. We define the neighborhoods of zero narrow band in two type of layers: $L_1, \dots, L_{N-1}$, the layers that are outside the structure, and $L_{-1}, \dots, L_{-N+1}$, the layers that are inside the structure. A layer is defined by its distance interval to the zero level set, ie 
+$L_i = \lbrace (x, y) | (i-1 - 0.5)\delta \leq \psi(x, y) \leq (i + 0.5) \delta \rbrace$
+
+
+$\overrightarrow{N}$ est le vecteur normal unitaire à la courbe $C$.
+\section{Implementation and results}
+
+\subsection{Dataset}
+A new dataset that was not used by the authors and which presents new challenges. Chaos dataset \url{https://chaos.grand-challenge.org/Download/} (only CT scans and MRI images are available). Data corresponds to a series of DICOM images belonging to a single patient. In order to provide sufficient data that contains enough variability to be representative of the problem, the data sets in the training data are selected to represent both the difficulties that are observed on the whole database (e.g. partial volume effects for CT or bias fields for MRI) and examples of the rare but important challenges such as atypical liver shapes (Figures 4 and 5). It only contains healthy livers aligned in the same direction and patient position. However, the challenging part is the enhanced vascular structures (portal phase) due to the contrast injection. 
+
+SLIVER07 dataset \url{https://sliver07.grand-challenge.org/Home/} (only CT scans are available). The data consists of 20 training scans and 10 test scans.
+\section{Conclusion}
+
+\printbibliography
+\end{document}

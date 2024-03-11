@@ -1,0 +1,14 @@
+# TeX files
+*.aux
+*.bbl
+*.out
+*.blg
+*.log
+*run.xml
+*.synctex.gz
+*.fls 
+*.fdb_latexmk
+*.bcf 
+
+# data
+__*
