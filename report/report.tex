@@ -33,7 +33,7 @@ $C = \{(x, y) | \psi(x, y) = 0\}$ est le niveau 0 de cette fonction. $\psi$ est 
 si $(x, y)$ est à l'exterieur de l'objet délimité par $C$ et $\psi(x, y) < 0$ si $(x, y)$ est à l'interieur de $C$.
 
 Nous considérons une bande étroite de pixels adjacents à l'ensemble de niveau zéro $L_0$. Nous définissons les voisinages de $L_0$ en deux types de couches : $L_1, \dots, L_{N-1}$, les couches qui sont à l'extérieur de la structure, et $L_{-1}, \dots, L_{-N+1}$, les couches qui sont à l'intérieur de la structure. Une couche est définie par son intervalle de distance à l'ensemble de niveau zéro, c'est-à-dire
-$L_i = \lbrace (x, y) | (-i - 0.5)\delta \leq \psi(x, y) \leq (i + 0.5) \delta \rbrace$, pour $|i|<N-1$. 
+$L_i = \lbrace (x, y) | (i - 0.5)\delta \leq \psi(x, y) \leq (i + 0.5) \delta \rbrace$, pour $|i|<N-2$. 
 
 Par exemple, pour $N=4$, les labels de chaque couche sont $\{-3,\ -2,\ -1,\ 0,\ 1,\ 2,\ 3\}$ et 
 \begin{align*}
@@ -104,19 +104,38 @@ Les cartes de distances prédites par le réseau de neurones présentes des arti
 
 
 \section{Methods}
-\url{https://arxiv.org/abs/1411.4038} 
 
-We consider a narrow band of grid points adjacent to the zero level set as $L_0$ layer. We define the neighborhoods of zero narrow band in two type of layers: $L_1, \dots, L_{N-1}$, the layers that are outside the structure, and $L_{-1}, \dots, L_{-N+1}$, the layers that are inside the structure. A layer is defined by its distance interval to the zero level set, ie 
+\subsection{Turn the binary label map to layered label map}
+The first step is to transform a binary image mask, which serves as a segmentation result and has only two labels (0 stands for background and 1 for foreground), into a label map with multiple categories (N > 2). The label map contains not only spatial regional information (whether a pixel is on the foreground or background) but also boundary information (whether a pixel is on the object boundary), as well as information about the relative distance to the object boundary.
+
+The structured label map consists of several layers, including narrow band layers near the object boundary, exterior regional layer, and interior regional layer. These layers are nonoverlapping and cover the entire image domain.
+
+Let's consider a narrow band of grid points adjacent to the zero level set as $L_0$ layer. We define the neighborhoods of zero narrow band in two type of layers: $L_1, \dots, L_{N-1}$, the layers that are outside the structure, and $L_{-1}, \dots, L_{-N+1}$, the layers that are inside the structure. A layer is defined by its distance interval to the zero level set, ie 
 $L_i = \lbrace (x, y) | (i-1 - 0.5)\delta \leq \psi(x, y) \leq (i + 0.5) \delta \rbrace$
 
 
+I adopt the same convention as the authors \cite{guo_automatic_2019}. The distance for pixel outside the object (background) is positive and is negative for pixel inside the object (foreground). 
+
+
+\subsection{Training the neural network}
+
+Mirroring the methodology used in \cite{guo_automatic_2019}, I used the same architecture for the neural network. I use the FCN-8 architecture from \cite{long_fully_2015}. It uses the Caffe deep learning framework. I performed transfer learning by taking the pre-trained model from \url{https://github.com/wkentaro/pytorch-fcn}
+
+\subsection{Resolution of the Active contour model evolution}
 $\overrightarrow{N}$ est le vecteur normal unitaire à la courbe $C$.
+
+
+
 \section{Implementation and results}
 
 \subsection{Dataset}
 A new dataset that was not used by the authors and which presents new challenges. Chaos dataset \url{https://chaos.grand-challenge.org/Download/} (only CT scans and MRI images are available). Data corresponds to a series of DICOM images belonging to a single patient. In order to provide sufficient data that contains enough variability to be representative of the problem, the data sets in the training data are selected to represent both the difficulties that are observed on the whole database (e.g. partial volume effects for CT or bias fields for MRI) and examples of the rare but important challenges such as atypical liver shapes (Figures 4 and 5). It only contains healthy livers aligned in the same direction and patient position. However, the challenging part is the enhanced vascular structures (portal phase) due to the contrast injection. 
 
+Each axial slice has identical size of 512 9 512, the number of slices varies from [TO CHECK]
+
+
 SLIVER07 dataset \url{https://sliver07.grand-challenge.org/Home/} (only CT scans are available). The data consists of 20 training scans and 10 test scans.
+
 \section{Conclusion}
 
 \printbibliography
