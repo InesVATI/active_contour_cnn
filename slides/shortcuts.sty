@@ -1,3 +1,11 @@
+% \usepackage{iftex}
+% \ifPDFTeX
+%     % \usepackage[T1]{fontenc}
+%     % \usepackage{mathpazo}
+% \else
+%     \usepackage{fontspec}
+% \fi
+
 %---------------------
 %	MATHS
 %---------------------
@@ -6,12 +14,21 @@
 \usepackage{amssymb}
 \usepackage{amsmath}
 \usepackage{amsfonts}
+\usepackage{bbm} %indicator function
 
 %---------------------
 %   ALGORITHMS
 %---------------------
 \usepackage{algorithm}
-\usepackage{algorithmic}
+% \usepackage{algorithmic}
+
+\usepackage{algpseudocode}
+\algblock{Input}{EndInput}
+\algnotext{EndInput}
+\algblock{Output}{EndOutput}
+\algnotext{EndOutput}
+
+\newcommand{\Desc}[2]{\State \makebox[2em][l]{#1}#2}
 
 % ------------
 % APPENDIX
@@ -50,6 +67,9 @@
 \newcommand{\red}[1]{\textcolor{red}{#1}}
 \newcommand{\blue}[1]{\textcolor{blue}{#1}}
 \newcommand{\orange}[1]{\textcolor{orange}{#1}}
+\newcommand{\magenta}[1]{\textcolor{magenta}{#1}}
+\newcommand{\black}[1]{\textcolor{black}{#1}}
+\newcommand{\grey}[1]{\textcolor{gray}{#1}}
 
 %---------------------
 % HYPERREF
@@ -76,16 +96,16 @@
 % NEW COMMANDS
 %---------------------
 
-\newcommand{\ens}[2]{\lbrace #1, #2 \rbrace}
-\newcommand{\abs}[1]{\|#1\|}
-\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\newcommand{\ens}[2]{\lbrace #1,\quad #2 \rbrace}
+\newcommand{\abs}[1]{|#1|}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert} % norm
 \newcommand{\dotp}[2]{\langle #1, #2 \rangle}
 \newcommand{\intinter}[2]{[\![ #1, #2 ]\!]}
 
 \newcommand{\RR}{\mathbb{R}}
 \newcommand{\N}{\mathcal{N}} % neighborhood, normal distribution
 \newcommand{\E}{\mathbf{E}} % expectation
-\newcommand{\ones}{\mathbb{1}} % indicator or vector of ones
+\newcommand{\ones}{\mathbbm{1}} % indicator or vector of ones
 
 \newcommand{\uinf}[1]{\underset{#1}{\inf}\;}
 \newcommand{\umin}[1]{\underset{#1}{\min}\;}
@@ -94,3 +114,4 @@
 
 \newcommand\mtiny[1]{\mbox{\tiny\ensuremath{#1}}} % size changing in math mode
 
+\newcommand{\citeall}[1]{{\tiny\blue{\Citeauthor*{#1}, \citetitle{#1}, \citeyear{#1}}}}
