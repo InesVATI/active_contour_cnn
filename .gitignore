@@ -9,6 +9,9 @@
 *.fls 
 *.fdb_latexmk
 *.bcf 
+*.nav
+*.snm
+*.toc
 
 # data
 __*

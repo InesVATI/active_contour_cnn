@@ -1,5 +1,5 @@
 import numpy as np
-from MVA_NT_geodesic_methods.nt_toolbox.perform_fast_marching import *
+from MVA_geodesic_methods.nt_toolbox.perform_fast_marching import *
 
 
 def perform_redistancing(D):

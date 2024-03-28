@@ -1,0 +1,96 @@
+%---------------------
+%	MATHS
+%---------------------
+% \RequirePackage{amsthm,amsmath,amsfonts,amssymb}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+
+%---------------------
+%   ALGORITHMS
+%---------------------
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% ------------
+% APPENDIX
+% -------------
+\usepackage{appendix}
+
+%---------------------
+% \RequirePackage{authblk}
+% \usepackage{authblk} %add affiliations and multiple authors
+% \author[1,2]{Ines VATI}
+% \affil[1]{École des Ponts ParisTech, Champs-sur-Marne, France}
+% \affil[2]{MVA, ENS Paris-Saclay, Cachan, France}
+% \affil[1, 2]{Contact \email{ines.vati@eleves.enpc.fr}}
+
+%---------------------
+%  TABLES
+%---------------------
+\usepackage{tabularx}
+
+%---------------------
+%    FIGURES
+%---------------------
+
+% \usepackage{wrapfig} %wrapfigure
+% \RequirePackage{graphicx}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+\graphicspath{ {../figures/} }
+
+%---------------------
+%   COLORS
+%---------------------
+\usepackage{xcolor}
+
+\newcommand{\red}[1]{\textcolor{red}{#1}}
+\newcommand{\blue}[1]{\textcolor{blue}{#1}}
+\newcommand{\orange}[1]{\textcolor{orange}{#1}}
+
+%---------------------
+% HYPERREF
+%---------------------
+% \usepackage{hyperref}
+
+% % Colors for the hyperref package
+% \definecolor{urlcolor}{rgb}{0,.145,.698}
+% \definecolor{linkcolor}{rgb}{.71,0.21,0.01}
+% \definecolor{citecolor}{rgb}{.12,.54,.11}
+
+% % Setup hyperref package
+% \hypersetup{
+%   breaklinks=true,  % so long urls are correctly broken across lines
+%   colorlinks=true,
+%   urlcolor=urlcolor,
+%   linkcolor=linkcolor,
+%   citecolor=citecolor,
+%   }
+
+% \newcommand{\email}[1]{\href{mailto:#1}{#1}}
+
+%---------------------
+% NEW COMMANDS
+%---------------------
+
+\newcommand{\ens}[2]{\lbrace #1, #2 \rbrace}
+\newcommand{\abs}[1]{\|#1\|}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\newcommand{\dotp}[2]{\langle #1, #2 \rangle}
+\newcommand{\intinter}[2]{[\![ #1, #2 ]\!]}
+
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\N}{\mathcal{N}} % neighborhood, normal distribution
+\newcommand{\E}{\mathbf{E}} % expectation
+\newcommand{\ones}{\mathbb{1}} % indicator or vector of ones
+
+\newcommand{\uinf}[1]{\underset{#1}{\inf}\;}
+\newcommand{\umin}[1]{\underset{#1}{\min}\;}
+\newcommand{\umax}[1]{\underset{#1}{\max}\;}
+\newcommand{\uargmin}[1]{\underset{#1}{argmin}\;}
+
+\newcommand\mtiny[1]{\mbox{\tiny\ensuremath{#1}}} % size changing in math mode
+

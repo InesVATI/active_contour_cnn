@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from MVA_NT_geodesic_methods.nt_toolbox.signal import imageplot
+from MVA_geodesic_methods.nt_toolbox.signal import imageplot
 
 def plot_levelset(Z, level=0, f=[]):
     """
