@@ -33,9 +33,6 @@ def save_multilayer_label_map(data_path : str, N: int = 4, d : float = 2,
             slice_id = binarymap_files[i][9:12]
             layer_map_save = os.path.join(data_path, f'{patient_id}', dir, f'GT_map_{slice_id}.npy')
 
-            # if os.path.exists(layer_map_save):
-            #     continue
-
             # adapt narrow bandwidth delta according to pixel spacing
             ds = dicom.dcmread(os.path.join(f"{data_path}/{patient_id}/DICOM_anon", dicom_files[i]))
             delta = d / ds.PixelSpacing[0]
