@@ -1,0 +1,216 @@
+\subsection{Dataset}
+\begin{frame}{CHAOS Dataset}
+    \citeall{kavur_chaos_2019}
+    \begin{itemize}
+        \item $512 \times 512 $ CT images of 20 different patients with healthy liver (no tumor, lesions or any other diseases)
+        \item For each patient, there is a series of DICOM images ($\sim$100 slices per patient)
+        \item A dataset with challenges : partial volume effects, atypical liver shapes, etc.
+    \end{itemize}
+    % Partial volume effect is an artifact that occurs in CT scans when tissues of widely different absorption are encompassed on the same CT voxel, producing a beam attenuation proportional to the average value of these tissues
+
+    \begin{figure}[H]
+        \begin{subfigure}{.3\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{issues_ct1.png}
+            \caption{Atypical shape}
+        \end{subfigure}
+        \begin{subfigure}{.3\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{issue_ct2.png}
+            \caption{Unclear boundary}
+        \end{subfigure}
+        \begin{subfigure}{.3\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{issue_ct3.png}
+            \caption{Disconnected parts}
+        \end{subfigure}
+    \end{figure}
+\end{frame}
+
+\subsection{Train FCN}
+\begin{frame}{Train FCN}
+    Transfer learning with pre-trained FCN-8 weights from \citeauthor*{long_fully_2015}
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{FCN8_pretrainedfreeze_lr0005_bs20_weights1x6-0.2.png} \\ 
+            (1) Train only the new layers \\
+            \tiny{\grey{Batch size of $20$, use of Cosine Annealing Learning Rate Scheduler from lr $= 0.005$}}
+        \end{column}
+
+        \begin{column}{.5\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{FCN8_pretrainedunfreeze.png} \\ 
+            (2) Unfreeze some pre-trained layers {\tiny(the last 9)} \\
+            \tiny{\grey{Batch size of $16$, lr $= 0.0001$}}
+        \end{column}
+    \end{columns}
+    \vfill
+    \grey{$2005$ training images, $200$ epochs, SGD optimizer with momentum of $.9$} \\ 
+    The early stopper was never reached
+\end{frame}
+
+\subsection{Solve ACM}
+\begin{frame}{Level Set Resolution}
+
+ $\frac{\partial \varphi}{\partial t} = G(\varphi) $
+    \begin{algorithm}[H]
+        \caption{Level Set Method}
+        \begin{algorithmic}
+            \Input 
+            \Desc{$I$}{(Normalized) Image}
+            \Desc{$\varphi_0$}{Signed distance to the initial contour}
+            \Desc{$N$}{Number of iterations} \Desc{$\delta t$}{Step size}
+            \Desc{$n$}{Re-distancing period}
+            \EndInput
+            \State \textbf{Initialize} $\varphi^{(0)} \gets \varphi_0$
+            \For{$t=0$ to $N$}
+                \State Compute $G(\varphi^{(t)})$
+                \State \magenta{$\varphi^{(t+1)} \gets \varphi^{(t)} - \delta t\ G(\varphi^{(t)})$} \Comment{Gradient Descent}
+                \State Re-distancing $\varphi^{(t+1)}$ every $n$ iterations \Comment{Levelset Re-distancing} % :  computing the signed distance function to the zero level set
+            \EndFor
+        \end{algorithmic}
+    \end{algorithm}
+\end{frame}
+
+\subsection{Comparative Analysis: Evaluating Active Contours Models}
+
+\begin{frame}{Comparative Evaluation}
+    \framesubtitle{Mean Curvature Motion with \magenta{global} regional Chan Vese forces}
+
+    $$ G(\varphi) = \omega_0\norm{\nabla\varphi}\textrm{div}\left(\frac{\nabla \varphi}{\norm{\nabla\varphi}}\right) + \omega_1 ((I - c_{\textrm{ext}})^2 - (I - c_{\textrm{int}})^2 ) $$
+
+    \begin{columns}
+        \begin{column}{0.95\textwidth}    
+        $$ c_{\textrm{int}} = \frac{\int_{\Omega}I(x)(1 - H(\varphi(x)))dx}{\int_\Omega 1 - H(\varphi(x)) dx} $$
+        $$ c_{\textrm{ext}} = \frac{\int_{\Omega}I(x)H(\varphi(x))dx}{\int_\Omega H(\varphi(x)) dx} $$
+        \end{column}
+        \begin{column}{0.25\textwidth}
+        \hspace*{-2cm}\includegraphics[width=\textwidth]{heaviside_func.png}
+        \end{column}
+    \end{columns}
+    \vspace{0.7cm}
+    \centering{\grey{\tiny 1000 iterations, $\omega_0=0.001$, $\omega_1=5$, $\delta t = 0.4$}}
+
+    \includegraphics[width=\textwidth]{solve_acm__CVglobal_w[0.001, 0, 5]_FCNorder2.png}
+\end{frame}
+
+\begin{frame}{Comparative Evaluation}
+    \framesubtitle{Mean Curvature Motion with \magenta{global} regional Chan Vese forces \magenta{with edge information}}
+    \citeall{caselles_geodesic_1997}
+
+    $$ G(\varphi) = \omega_0\magenta{g(I)}\norm{\nabla\varphi}\textrm{div}\left(\frac{\nabla \varphi}{\norm{\nabla\varphi}}\right) + \omega_0\dotp{\magenta{\nabla g}}{\nabla\varphi} +  \omega_1 F_{CV}  $$
+
+    $$ g(I) = \frac{1}{\epsilon + \norm{\nabla\ k_\sigma * I}} $$
+
+
+    \vspace{0.7cm}
+    \centering{\tiny \grey{1000 iterations, $\omega_0=0.001$, $\omega_1=5$, $\delta t = 0.4$}}
+
+    \includegraphics[width=\textwidth]{solve_acm__CVglobal_w[0.001, 0, 5]_FCNorder2_edgeinfo.png}
+\end{frame}
+
+\begin{frame}{Comparative Evaluation}
+    \framesubtitle{Adding Edge Information}
+    \citeall{caselles_geodesic_1997} 
+
+    $$ W = g(I) = \frac{1}{\epsilon + \norm{\nabla\ k_\sigma * I}} $$
+    \centering
+    \includegraphics[height=.65\textheight]{edge_info.png}
+\end{frame}
+
+\begin{frame}{Comparative Evaluation}
+    \framesubtitle{Mean Curvature Motion with \magenta{local} regional Chan Vese forces}
+    \citeall{lankton_localizing_2008} 
+
+    $$ G(\varphi) = \omega_0\norm{\nabla\varphi}\textrm{div}\left(\frac{\nabla \varphi}{\norm{\nabla\varphi}}\right) + \omega_1 ((I - c_{\textrm{ext}, x})^2 - (I - c_{\textrm{int}, x})^2 ) $$
+    $$ B_r(x, y) = \ones_{\norm{x - y} \leq r}$$
+    \begin{columns}
+        \begin{column}{0.5\textwidth}
+            $ c_{\textrm{int}, x} = \frac{\int_{\Omega}B_r(x, y)I(y)(1 - H(\varphi(y)))dy}{\int_\Omega B_r(x, y) (1 - H(\varphi(y))) dy} $
+        \end{column}
+        \begin{column}{.5\textwidth}
+            $
+            c_{\textrm{ext}, x} = \frac{\int_{\Omega}B_r(x, y)I(y)H(\varphi(y))dy}{\int_\Omega B_r(x, y) . H(\varphi(y)) dy}
+            $
+        \end{column}
+    \end{columns}
+    
+    \vspace{0.4cm}
+    \centering{\grey{\tiny 200 iterations, $\omega_0=0.1$, $\omega_1=5$, $\delta t = 0.4$, $r=10$}}
+
+    \includegraphics[width=\textwidth]{solve_acm__CVlocal_r10_w[0.1, 0, 5]_FCNorder2.png}
+\end{frame}
+
+\begin{frame}{Comparative Evaluation}
+    \framesubtitle{Mean Curvature Motion with \magenta{local} regional Chan Vese forces \magenta{with edge information}}
+    \citeall{caselles_geodesic_1997}
+
+    $$ G(\varphi) = \omega_0\magenta{g(I)}\norm{\nabla\varphi}\textrm{div}\left(\frac{\nabla \varphi}{\norm{\nabla\varphi}}\right) + \omega_0\dotp{\magenta{\nabla g}}{\nabla\varphi} +  \omega_1 F_{CV,x}  $$
+
+    $$ g(I) = \frac{1}{\epsilon + \norm{\nabla\ k_\sigma * I}} $$
+
+
+    \vspace{0.7cm}
+    \centering{\tiny \grey{1000 iterations, $\omega_0=0.1$, $\omega_1=5$, $\delta t = 0.4$, $r=10$}}
+
+    \includegraphics[width=\textwidth]{solve_acm__CVlocal_r10_w[0.1, 0, 5]_FCNorder2_edgeInfo.png}
+\end{frame}
+
+\begin{frame}{Comparative Evaluation}
+    \framesubtitle{Mean Curvature Motion with \magenta{global} regional Chan Vese forces \magenta{with additional $F_{\textrm{FCN}}$}}
+    \citeall{guo_automatic_2019} 
+
+    $$ G(\varphi) = \omega_0 \norm{\nabla \varphi}\kappa + \omega_1F_{CV} + \omega_2 F_{\textrm{FCN}}$$
+    \begin{columns}
+        \begin{column}{.5\textwidth}
+    Polynomial formulation of order $p$
+    $ F_{\textrm{FCN}} = \textrm{sign}(L(x, y)) \abs{L(x, y)}^p \vec{n}$
+        \end{column}
+        \begin{column}{.5\textwidth}
+            Exponential formulation
+    $F_{\textrm{FCN}} = \alpha\ .\ \textrm{sign}(L(x, y)) \textrm{e}^{\abs{L(x, y)}}\vec{n}$
+        \end{column}
+    \end{columns}
+    \vspace{0.7cm}
+    \centering{\tiny \grey{1000 iterations, $\omega_0=0.01$, $\omega_1=5$, $\omega_2=1$, $\delta t = 0.4$, $p=2$}}
+    \includegraphics[width=\textwidth]{solve_acm__CVglobal_w[0.01, 1, 5]_FCNorder2.png}
+    
+\end{frame}
+
+\begin{frame}{Comparative Evaluation}
+    \framesubtitle{External constraint $F_{\textrm{FCN}}$ forces}
+
+    \begin{center}
+    \tiny \grey{Polynomial function with $p=2$} 
+
+    \includegraphics[height=.8\textheight]{f_fcn.png}
+    \end{center}
+
+\end{frame}
+
+\begin{frame}{Comparative Evaluation}
+    \framesubtitle{Mean Curvature Motion with \magenta{local} regional Chan Vese forces \magenta{with additional $F_{\textrm{FCN}}$}}
+
+    $$ G(\varphi) = \omega_0 \norm{\nabla \varphi}\kappa + \omega_1F_{CV, x} + \omega_2 F_{\textrm{FCN}}$$
+
+    \vspace{0.7cm}
+    \centering{\tiny \grey{1000 iterations, $\omega_0=0.01$, $\omega_1=5$, $\omega_2=1$, $\delta t = 0.4$, $r=10$, $p=2$}}
+    \includegraphics[width=\textwidth]{solve_acm__CVlocal_w[0.01, 1, 5]_FCNorder2.png}
+\end{frame}
+
+\subsection{A Pathological Case}
+\begin{frame}{A Pathological Case}
+    \centering
+\includegraphics[height=.45\textheight]{ex_bad_case.png}
+\includegraphics[height=.5\textheight]{ex_bad_case_levelset.png}
+\end{frame}
+
+\begin{frame}{A Pathological Case - Result}
+    Mean Curvature Motion with global Chan Vese forces and polynomial FCN forces \\ 
+    \centering{\tiny \grey{1000 iterations, $\omega_0=0.01$, $\omega_1=5$, $\omega_2=1$, $\delta t = 0.4$, $p=2$}} 
+
+    \centering
+    \includegraphics[height=.4\textheight]{bad_case_f_fcn.png}
+    \includegraphics[width=\textwidth]{bad_case__CVglobal__w[0.01, 0.5, 5]_FCNorder2.png}
+\end{frame}

@@ -1,0 +1,142 @@
+\documentclass[hyperref={pdftex}]{beamer}
+\useoutertheme{shadow}
+\usetheme{Madrid}
+\usepackage{shortcuts}
+
+
+\setbeamertemplate{section in toc}{\inserttocsectionnumber.~\inserttocsection}
+
+
+\definecolor{mvablue}{rgb}{0.1098, 0.1373, 0.5137}
+\definecolor{mvapurple}{rgb}{0.3373, 0.1529, 0.4510}
+\definecolor{mvared}{rgb}{0.5725, 0.1882, 0.3922}
+
+\colorlet{titleleft}{mvablue}
+\colorlet{titlemiddle}{mvapurple}
+\colorlet{titleright}{mvared}
+
+\pgfdeclarehorizontalshading[titleleft,titlemiddle,titleright]
+      {beamer@frametitleshade}{\paperheight}{
+    color(0pt)=(titleleft);
+    color(0.5\paperwidth)=(titlemiddle);
+    color(\paperwidth)=(titleright)
+  }
+
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+
+\useinnertheme{tcolorbox}
+\addtobeamertemplate{title}{
+  \begingroup
+  \tcbset{
+    enhanced,
+    interior style={left color=mvablue,right color=mvared}
+  }
+}{\endgroup}
+
+\title{Deformable models and Geodesic Methods}
+\subtitle{\textit{Automatic liver segmentation by integrating fully convolutional networks into active contour models}}
+
+\author{Inès VATI\thanks{École Normale Supérieure Paris-Saclay, Master MVA}} %\thanks{ENS}
+\institute[MVA]{\includegraphics[height=1cm]{mva logo.png}}
+\date{ \today } %\\  \vspace{0.3cm} \includegraphics[scale=0.2]{teaser.png}
+\logo{\includegraphics[width=0.6cm]{MVA-logo.png}}
+
+% ---- Template -----
+\setbeamercolor{author in head/foot}{parent=palette primary,bg=}
+\setbeamercolor{title in head/foot}{parent=palette secondary,bg=}
+\setbeamercolor{frame number}{parent=palette tertiary,bg=}
+
+\makeatletter
+\setbeamertemplate{footline}
+{
+    \leavevmode%
+    \setbox\beamer@tempbox=\hbox{%
+        \begin{beamercolorbox}[wd=.3\paperwidth,ht=2.25ex,dp=1ex,center]{author in head/foot}%
+            \usebeamerfont{author in head/foot}\insertshortauthor\expandafter\beamer@ifempty\expandafter{\beamer@shortinstitute}{}{~~(\insertshortinstitute)}
+        \end{beamercolorbox}%
+        \begin{beamercolorbox}[wd=.4\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}%
+            \usebeamerfont{title in head/foot}\insertshorttitle 
+        \end{beamercolorbox}%
+        \begin{beamercolorbox}[wd=.3\paperwidth,ht=2.25ex,dp=1ex,center]{frame number}%
+         \usebeamerfont{frame number}\insertframenumber/\inserttotalframenumber
+      \end{beamercolorbox}%
+        }%
+        \beamer@tempdim=\ht\beamer@tempbox%
+        \advance\beamer@tempdim by 4pt%
+        \begin{pgfpicture}{0pt}{0pt}{\paperwidth}{10pt}
+            \pgfpathrectangle{\pgfpointorigin}{\pgfpoint{\paperwidth}{\beamer@tempdim}}
+            \pgfusepath{clip}
+            \pgftext[left,base]{\pgfuseshading{beamer@frametitleshade}}
+        \end{pgfpicture}
+        \vskip-\beamer@tempdim%
+        \box\beamer@tempbox%    
+}%
+\makeatother
+% -------------------
+%% Table of content
+\usepackage[style=authoryear]{biblatex}
+\addbibresource{../report/ref.bib}
+
+\AtBeginSection[] % \AtBeginSubsection
+{
+\begin{frame}{Overview}
+\vfill
+\tableofcontents[currentsection] % hideallsubsections
+\vfill
+\end{frame}
+}
+
+  
+\newcommand{\myitem}{\item[$\rightarrow$]}
+\newcommand{\mycoolitem}{\item[\checkmark]}
+
+\begin{document}
+
+% \frame[plain]{\titlepage}
+\begin{frame}[plain]
+  \titlepage
+\end{frame}    
+
+\begin{frame}{Table of contents}
+  \tableofcontents
+\end{frame}
+
+% Presentation of the problem
+\section{Problem statement}
+\begin{frame}{Problem statement}
+  \begin{itemize}
+    \item Liver segmentation is a crucial step in liver surgery planning and monitoring
+    \item Manual segmentation is time-consuming and prone to errors
+    \item Accurate liver segmentation is a challenging task due to the liver's complex shape and the presence of other organs with similar intensities (stomach, heart)
+  \end{itemize}
+  \vfill
+  \begin{center}
+    \includegraphics[width=.6\textwidth]{illu_liver_seg.png}
+  \end{center}
+\end{frame}
+
+% Proposed methods
+\section{Proposed Method}
+\input{content/method.tex}
+
+\section{Experiments and Implementation Details}
+\input{content/implementation.tex}
+
+% Critics
+% Conclusion / perspective
+\section{Conclusion and Perspectives}
+\begin{frame}{Conclusion and Perspectives}
+  \begin{itemize}
+    \item Parallel with the Balloon model (inflation force)
+    \item Possible improvements by using another method for level set Resolution : sparse field method [\citeonslide{guo_automatic_2019}, \citeonslide{whitaker_level-set_1998}]
+    \item Train with additional dataset (SLIVER07)
+    \item Experiment with other architectures (Other FCNs 
+    [\citeonslide{long_fully_2015}], DeepLab [\citeonslide{ferrari_encoder-decoder_2018}], U-Net [\citeonslide{huang_unet_2020}])
+\end{itemize}
+\end{frame}
+
+\begin{frame}[allowframebreaks]{References}
+    \printbibliography
+\end{frame}
+
+\end{document}
